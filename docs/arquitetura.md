@@ -163,3 +163,22 @@ NEXUS_BOT/
 ## 12. Estado de validação
 
 Esta é uma especificação de arquitetura. Não significa que o software, o firmware, o modelo, a NPU, a visão ou o hardware já tenham sido implementados/testados. Os resultados devem ser marcados como **não validados** até haver evidência de teste no hardware real.
+
+
+## 13. Geometria mecânica e cúpula
+
+### Corpo e locomoção
+
+- O corpo será cilíndrico, alojado no barril de 5 litros.
+- **Não haverá pernas laterais ou articuladas.** A locomoção será exclusivamente por rodas instaladas na parte inferior do corpo.
+- Duas rodas motrizes e uma roda auxiliar são uma configuração candidata, não uma decisão fechada. A geometria final depende das medidas internas do barril, massa, centro de gravidade, piso e velocidade pretendida.
+- O conjunto de tração deverá ficar em uma base/estrutura interna removível, separada da função estética da carcaça.
+- Não dimensionar motores, rodas, driver ou bateria antes de levantar medidas e estimar a massa total.
+
+### Cúpula
+
+- A cúpula deverá ser fabricada por impressão 3D; material, dimensões, divisão em peças e método de fixação ainda não foram definidos.
+- A cúpula deve ser projetada como módulo independente, com espaço para câmera/sensores somente depois de definir os componentes.
+- **A rotação permanece em estudo.** Não há decisão entre cúpula fixa, giro limitado ou giro contínuo, nem entre servo, motorredutor ou outro mecanismo.
+- Antes de selecionar o acionamento, avaliar: massa e inércia da cúpula; velocidade e precisão necessárias; ruído; folga; rolamento/guia; limites mecânicos; detecção de posição; alimentação; roteamento e torção dos cabos; eventual necessidade de anel deslizante; manutenção e risco de prender dedos/objetos.
+- A solução inicial deve priorizar simplicidade e segurança. Não comprar mecanismo de rotação antes de fechar os requisitos.
