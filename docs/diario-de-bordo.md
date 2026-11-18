@@ -87,3 +87,13 @@ Este documento é o registro cronológico das decisões, correções, hipóteses
 ## Próxima prioridade
 
 Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem Linux suportada. Não avançar para inferência, NPU ou montagem mecânica antes de obter medições reais da placa e do barril.
+
+
+## 2026-11-18 — clarificação do conceito mecânico
+
+54. **Locomoção sem pernas:** o NEXUS BOT não terá pernas laterais, articuladas ou semelhantes às do R2-D2. A locomoção será feita exclusivamente por rodas instaladas na parte inferior do corpo cilíndrico.
+55. **Arranjo das rodas ainda em aberto:** duas rodas motrizes e uma roda auxiliar continuam sendo apenas uma hipótese de chassis, não uma especificação fechada. Quantidade, posição, diâmetro, tipo de roda, suspensão/apoio e geometria dependem das medidas do barril, massa e centro de gravidade.
+56. **Cúpula impressa em 3D:** a intenção é fabricar a cúpula por impressão 3D. Material, divisão em peças, espessura, acabamento, encaixe e dimensões serão definidos depois do levantamento físico e da escolha da impressora/processo.
+57. **Giro da cúpula não decidido:** manter a cúpula inicialmente como módulo independente, sem escolher servo, motorredutor, rolamento, anel deslizante ou mecanismo de transmissão. A decisão depende de definir se o giro será limitado ou contínuo, quais componentes ficarão na cúpula, massa/inércia, ruído, folga, rota dos cabos, alimentação, limites mecânicos e manutenção.
+58. **Referência do artigo R2-D2:** aproveitar o princípio de construir uma estrutura interna de suporte e instalar os módulos nela antes do acabamento externo. Não reproduzir pernas, pés motorizados ou o mecanismo de cúpula da réplica; são soluções de outra escala e finalidade.
+59. **Regra de projeto:** não comprar nem dimensionar o mecanismo de rotação da cúpula até comparar pelo menos uma solução fixa, uma solução de giro limitado e uma solução de giro contínuo, considerando cabos e segurança mecânica.
