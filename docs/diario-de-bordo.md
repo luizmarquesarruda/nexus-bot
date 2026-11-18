@@ -1,32 +1,89 @@
 # Diário de bordo — NEXUS BOT
 
-## 2026-11-17 — consolidação inicial
+Este documento é o registro cronológico das decisões, correções, hipóteses, validações e próximos passos do projeto. Entradas antigas são preservadas; quando uma decisão posterior substitui outra, a substituição fica explícita.
 
-- Projeto definido como robô assistente móvel de pequeno porte instalado em barril de 5 litros.
-- Orçamento-alvo da V1: R$ 800; hardware usado é aceitável.
-- Orange Pi Zero 3 H618 com 2 GB escolhida como candidata a cérebro, sujeita a validação de sistema operacional, áudio, temperatura e desempenho.
-- ESP32 clássico definido como controlador local de motores, sensores, LEDs e buzzer.
-- Decidido que o robô não terá alto-falante nem falará palavras. A resposta sonora será feita por buzzer piezo passivo com padrões próprios.
-- Microfone para comandos de voz continua em aberto; preferência inicial por solução USB compatível com Linux.
-- SQLite será a opção simples para memória local.
-- UART será o canal inicial Orange Pi–ESP32, com timeout e parada segura.
-- Repositório renomeado para `nexus-bot` e confirmado público.
-- Estrutura inicial de documentação criada. Nenhuma peça foi comprada e nenhum teste físico foi executado.
+## 2026-11-17 — registro inicial preservado
 
-## Próximas ações
+1. Projeto definido como robô assistente móvel de pequeno porte instalado em um barril de 5 litros.
+2. Orçamento-alvo inicial da V1: R$ 800; componentes usados podem ser considerados.
+3. Orange Pi Zero 3 H618 com 2 GB foi registrada como candidata inicial de computação.
+4. ESP32 clássico foi definido como controlador local de motores, sensores, LEDs e buzzer.
+5. Foi decidido que o robô não terá alto-falante nem fala sintetizada. A resposta sonora será feita por padrões próprios em buzzer piezo passivo.
+6. Microfone para comandos de voz ficou em aberto na proposta inicial.
+7. SQLite foi considerado para memória local.
+8. UART foi escolhida como ligação inicial Orange Pi–ESP32, com timeout e parada segura.
+9. Repositório público criado com o nome `nexus-bot`.
+10. Nenhuma peça foi comprada e nenhum teste físico foi executado.
 
-1. Medir altura interna útil, diâmetro interno, gargalo/aberturas, pontos de fixação e interferências do barril.
-2. Fotografar e registrar as medidas com régua/paquímetro.
-3. Confirmar o anúncio exato e a variante de Orange Pi (RAM e revisão).
-4. Definir microfone USB e testar captura de áudio na distribuição Linux escolhida.
-5. Fazer benchmark de RAM, temperatura, STT em português e latência sob carga.
-6. Levantar massa estimada, velocidade, inclinação e autonomia desejadas para dimensionar motores e bateria.
-7. Fechar lista de materiais e custo total antes da compra.
+## 2026-11-18 — consolidação de arquitetura e correções de rumo
 
-## Registro de validação
+### Decisões vigentes
 
-- CI: não configurada / não executada.
-- Teste de hardware: não validado.
-- Reconhecimento de fala em português na Orange Pi: não validado.
-- Inferência de LLM local: não validado.
-- Mobilidade e autonomia: não validadas.
+11. **Computador principal corrigido:** a plataforma definida passa a ser Orange Pi 4 Pro, com SoC Allwinner A733 e 4 GB de RAM, conforme a placa selecionada nas conversas do projeto. A Orange Pi Zero 3 H618/2 GB deixa de ser a plataforma-alvo. A variante exata, revisão, alimentação, suporte Linux e disponibilidade de drivers ainda precisam ser conferidos no produto físico.
+12. **Sistema operacional:** usar Linux minimalista, sem desktop permanente, com acesso por SSH. Preferir a imagem/kernel suportados pelo fabricante quando forem necessários drivers específicos do A733. Compatibilidade real ainda não validada.
+13. **Runtime de IA:** usar `llama.cpp` para inferência local. **Ollama está descartado** para este projeto e não deve voltar a ser proposto como runtime padrão.
+14. **Modelo inicial experimental:** Qwen2.5-0.5B-Instruct em formato GGUF, quantização Q8_0, como primeiro candidato para benchmark em CPU ARM64. Não é desempenho validado nem compromisso definitivo de modelo.
+15. **NPU:** o acelerador anunciado para a placa não deve ser tratado como acelerador universal de LLM. Qualquer uso depende de runtime, drivers, conversão e benchmark específico; até lá, NPU é experimental.
+16. **Armazenamento:** começar com microSD de boa procedência. SSD M.2/NVMe não faz parte dos requisitos da primeira versão. Evitar escrita excessiva e implementar rotação de logs e gravações agrupadas.
+17. **Memória persistente:** SQLite como base local, com FTS5 para pesquisa textual. Embeddings e busca semântica ficam para etapa posterior, somente se RAM, CPU e armazenamento permitirem.
+18. **Linguagem de integração:** Python nos serviços de alto nível, com interfaces explícitas entre módulos e sem dependências circulares.
+19. **Objetivo de IA:** construir uma IA pequena no início, mas com arquitetura preparada para desenvolver novas habilidades. Não confundir evolução de capacidades com treinamento contínuo dos pesos do modelo.
+20. **Autonomia escolhida — nível 2,5:** autonomia evolutiva supervisionada. O NEXUS pode identificar limitações, pesquisar soluções, criar ferramentas, escrever código, corrigir código em ambiente isolado e executar testes automaticamente. Melhorias classificadas como baixo risco podem ser instaladas automaticamente após aprovação dos testes e com rollback disponível. Mudanças em módulos centrais, permissões, comportamento persistente ou interfaces críticas exigem aprovação humana.
+21. **Limites invioláveis do nível 2,5:** o NEXUS não pode alterar o próprio mecanismo de autorização, desativar ou enfraquecer o NEXUS GUARD, conceder permissões a si mesmo, apagar trilhas de auditoria, modificar os limites de segurança física ou assumir controle direto dos motores. Nenhum código gerado deve ir diretamente para produção sem testes e política de aprovação.
+22. **Novo módulo — NEXUS DEVELOPER:** subsistema responsável por pesquisar, planejar, gerar ferramentas/scripts, executar testes, comparar resultados e preparar propostas de evolução. O módulo deve operar em ambiente isolado, com permissões mínimas, comandos permitidos por lista, limites de recursos, logs e possibilidade de reversão.
+23. **Novo conceito — NEXUS SKILL FACTORY:** processo para transformar uma capacidade ausente em uma ferramenta independente: detectar a lacuna, especificar a habilidade, desenvolver, testar, avaliar risco e incorporar conforme a política do nível 2,5.
+24. **Memória evolutiva escolhida:** registrar episódios, contexto, ações, resultados e confiança; identificar padrões; sugerir mudanças e novas habilidades. A memória pode evoluir, mas não pode alterar automaticamente regras de segurança ou limites de ação.
+25. **Visão escolhida — híbrida:** começar com captura e processamento leve usando OpenCV; ativar análise mais pesada sob demanda. MobileCLIP-S0 e VIPLite são experimentos possíveis para aceleração/visão, sem garantia de compatibilidade com a NPU. YOLO leve pode ser avaliado posteriormente para detecção de objetos; não é requisito inicial.
+26. **Autonomia operacional escolhida — controlada:** iniciar em modo de observação/resposta. Depois habilitar apenas comandos previamente autorizados. Iniciativas automáticas devem ser limitadas a ações expressamente permitidas e não podem resultar em movimento perigoso.
+27. **Controle embarcado:** arquitetura prevista com um ESP32 convencional como controlador principal e dois ESP32 Mini como auxiliares. Distribuição proposta: ESP32 principal para motores, sensores críticos, watchdog e parada segura; Mini 1 para sensores auxiliares; Mini 2 para monitoramento de energia, buzzer e periféricos. Modelos, pinagem, tensões e divisão final ainda não foram validados.
+28. **Áudio corrigido:** não haverá voz falada, alto-falante, Piper ou síntese de fala. A comunicação sonora será por buzzer piezo passivo, preferencialmente compatível com 3,3 V, acionado pelo ESP32 e com padrões sonoros próprios. Entrada por microfone não está aprovada como requisito da arquitetura atual; não presumir reconhecimento de fala.
+29. **Comunicação entre placas:** UART entre Orange Pi e ESP32 principal. O protocolo deve ter framing/delimitação, versão, sequência, ACK, timeout, validade curta dos comandos, deduplicação, validação rigorosa e mecanismo de integridade (CRC/checksum). 115200 baud é apenas valor inicial de bancada, sujeito a teste.
+30. **Segurança física:** Orange Pi/LLM apenas solicitam ações. O ESP32 principal é soberano na validação de movimento e pode rejeitar qualquer comando. Perda de comunicação, travamento da Orange Pi, comando expirado ou falha crítica devem deixar motores parados. A parada de emergência deve existir em hardware e não depender da IA.
+31. **Forma física:** robô com rodas, pequeno, alojado em barril Heineken de 5 litros. Altura útil, diâmetro interno, gargalo, fixações, massa e centro de gravidade ainda não foram medidos. Não dimensionar motores, bateria ou estrutura definitiva sem essas medições.
+32. **Limite financeiro:** manter R$ 800 como orçamento-alvo global da V1. A placa principal pode consumir parcela relevante do orçamento. Fechar custo total — inclusive frete, tributos, bateria, BMS, conversores, driver, motores, rodas, sensores, cabos e estrutura — antes de autorizar compras.
+33. **Arquitetura de software:** separar pelo menos BRAIN, MEMORY, VISION, ATTENTION, PLANNER, GUARD, DEVELOPER, SKILLS e HEALTH/diagnósticos. A IA não deve controlar GPIO ou motores diretamente.
+34. **Estratégia de implementação:** primeiro criar e validar o AI CORE em bancada, sem motores e sem câmera: inicialização Linux, `llama.cpp`, modelo, orquestrador, memória, logs e testes offline. Integrar visão e controle físico somente depois.
+35. **Sem Docker na primeira etapa:** evitar adicionar Docker inicialmente em uma SBC de recursos limitados. Usar isolamento por usuário, diretórios de trabalho separados, ambientes Python, permissões mínimas e ferramentas de sandbox adequadas. Reavaliar somente se houver necessidade demonstrada.
+36. **Não adicionar SQLite/embeddings/serviços pesados sem medição:** o projeto começa simples; qualquer aumento de consumo deve ser medido na placa real.
+
+### Correções documentais necessárias
+
+37. README anterior e documentos iniciais ainda apontavam Orange Pi Zero 3/2 GB como placa candidata principal. Corrigido nesta revisão para Orange Pi 4 Pro/A733/4 GB como plataforma definida.
+38. Documentação inicial descrevia reconhecimento de fala/microfone como parte do caminho principal. Corrigido: entrada por microfone e reconhecimento de fala não são requisitos aprovados; saída sonora é exclusivamente buzzer passivo, sem voz falada.
+39. Referências a execução de IA local foram qualificadas como experimentais e dependentes de benchmark. `llama.cpp` é o runtime escolhido; Qwen2.5-0.5B-Instruct Q8_0 é somente o modelo inicial candidato.
+40. Foram incorporados os módulos NEXUS DEVELOPER e NEXUS SKILL FACTORY e as restrições de autonomia de nível 2,5.
+41. As especificações de hardware, desempenho, temperatura, autonomia, visão e compatibilidade com NPU permanecem **não validadas** até ensaio na placa física.
+
+## Plano de execução — sequência de fases
+
+42. Fase 1 — confirmar variante/revisão da Orange Pi 4 Pro, instalar Linux suportado e medir boot, RAM, temperatura, armazenamento e estabilidade.
+43. Fase 2 — compilar/instalar `llama.cpp`, executar Qwen2.5-0.5B-Instruct GGUF Q8_0 e medir latência, RSS, pico de RAM, temperatura e estabilidade.
+44. Fase 3 — construir NEXUS BRAIN e orquestrador, sem acesso direto ao hardware.
+45. Fase 4 — implementar NEXUS MEMORY com SQLite/FTS5, esquema versionado e testes de persistência.
+46. Fase 5 — implementar NEXUS ATTENTION com fila de eventos, prioridades, deduplicação e controle de carga.
+47. Fase 6 — implementar NEXUS PLANNER e catálogo inicial de ferramentas.
+48. Fase 7 — implementar NEXUS GUARD, níveis de permissão, classificação de risco, logs invioláveis para o processo normal e testes de rejeição.
+49. Fase 8 — implementar NEXUS DEVELOPER/SKILL FACTORY em sandbox, testes automatizados, aprovação por risco e rollback.
+50. Fase 9 — estabelecer protocolo UART e firmware do ESP32 principal, testando mensagens inválidas, fragmentadas, duplicadas, expiradas e perda de comunicação.
+51. Fase 10 — integrar os dois ESP32 Mini, um por vez, após fechar suas responsabilidades e interfaces.
+52. Fase 11 — implementar visão híbrida: OpenCV primeiro; NPU/MobileCLIP/VIPLite e detector leve somente após benchmark.
+53. Fase 12 — integrar chassis, energia e módulos ao barril, com ensaios de parada, temperatura, ventilação, vibração, autonomia e estabilidade.
+
+## Estado de validação em 2026-11-18
+
+- Plataforma escolhida: Orange Pi 4 Pro A733/4 GB — **não validada fisicamente**.
+- Linux, drivers A733 e NPU — **não validados**.
+- `llama.cpp` no hardware-alvo — **não validado**.
+- Qwen2.5-0.5B-Instruct GGUF Q8_0 — candidato; **não validado no hardware-alvo**.
+- SQLite/FTS5 — decisão de arquitetura; implementação **não iniciada/não validada**.
+- NEXUS DEVELOPER nível 2,5 — requisito de projeto; implementação **não iniciada**.
+- ESP32 principal + dois ESP32 Mini — arquitetura escolhida; placas, firmware e integração **não validados**.
+- Buzzer passivo — decisão de interface sonora; ligação elétrica e padrões **não validados**.
+- Visão híbrida — estratégia escolhida; câmera, modelos e NPU **não validados**.
+- Dimensões do barril, motores, bateria, autonomia e orçamento final — **pendentes**.
+- Código de firmware/software e testes automatizados — não declarados como concluídos nesta atualização.
+- CI: **não validada nesta atualização**.
+
+## Próxima prioridade
+
+Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem Linux suportada. Não avançar para inferência, NPU ou montagem mecânica antes de obter medições reais da placa e do barril.
