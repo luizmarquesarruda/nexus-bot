@@ -30,9 +30,11 @@ Começar com microSD. SSD M.2/NVMe não é requisito da primeira versão. Reduzi
 
 ## Mobilidade
 
-Hipótese em avaliação: duas rodas motrizes laterais e uma roda auxiliar. Não escolher motor, driver, roda ou bateria até:
+O NEXUS BOT não terá pernas. A locomoção será feita exclusivamente por rodas instaladas na parte inferior do corpo cilíndrico. A base de tração deverá ser estruturalmente independente da carcaça externa e, preferencialmente, removível para manutenção.
+
+Duas rodas motrizes e uma roda auxiliar são uma configuração candidata, ainda não aprovada. Não escolher quantidade/posição final, motor, driver, roda ou bateria até:
 1. medir altura útil, diâmetro interno, abertura, pontos de fixação e obstáculos internos do barril;
-2. estimar massa total e distribuição de peso;
+2. estimar massa total e distribuição de peso/centro de gravidade;
 3. definir velocidade, inclinação e piso desejados;
 4. levantar corrente nominal e corrente de bloqueio dos motores;
 5. calcular torque, autonomia e margem térmica.
@@ -65,3 +67,12 @@ Orçamento-alvo global da V1: até R$ 800, aceitando usados quando houver proced
 - Custo total, incluindo frete e tributos.
 - Documentação e possibilidade de reposição.
 - Não comprar com base apenas em descrição genérica de marketplace.
+
+
+## Cúpula impressa em 3D
+
+A cúpula será projetada para impressão 3D. Material, geometria final, espessura, segmentação, suportes internos e acabamento permanecem pendentes.
+
+A rotação ainda não foi decidida. Comparar cúpula fixa, giro limitado e giro contínuo antes de selecionar servo, motorredutor, rolamento, transmissão ou anel deslizante. Considerar massa/inércia, ruído, folga, velocidade, posição, limite mecânico, alimentação, torção/roteamento dos cabos e manutenção. Não comprar mecanismo de giro nesta etapa.
+
+A cúpula não deve receber a Orange Pi. Reservar nela apenas espaço para componentes que forem efetivamente definidos, como câmera ou sensores. O processamento e os componentes que dissipam mais calor permanecem no corpo, com ventilação adequada.
