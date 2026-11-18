@@ -2,70 +2,61 @@
 
 ## Objetivo
 
-Definir uma interface explícita entre o processo de alto nível e o controlador de movimento. A implementação deve ser tolerante a mensagens parciais, ruído, reinicialização e perda de conexão.
+Definir uma interface explícita entre o processo de alto nível e o controlador de movimento. A implementação inicial usa quadros JSON delimitados por LF e validação local no ESP32.
 
 ## Transporte
 
 - UART full-duplex.
-- Baud rate inicial a validar em bancada: 115200 bps.
+- Baud rate inicial: 115200 bps (a validar na bancada).
 - 8 data bits, no parity, 1 stop bit (8N1).
-- Delimitador de quadro: newline (LF).
-- Codificação: UTF-8 restrita a conteúdo ASCII no protocolo inicial.
-- Uma mensagem por linha; tamanho máximo inicial sugerido: 256 bytes.
+- Delimitador: LF real (byte 0x0A); CR é ignorado pelo firmware.
+- Codificação: ASCII no conteúdo JSON inicial.
+- Tamanho máximo do quadro: 256 bytes.
 
-## Envelope lógico
-
-Formato inicial proposto em JSON por linha:
+## Envelope
 
 ```json
-{"v":1,"seq":42,"type":"cmd","name":"drive","left":0.20,"right":0.20,"ttl_ms":250}
+{"v":1,"seq":42,"type":"cmd","name":"drive","left":0.20,"right":0.20,"ttl_ms":200}
 ```
 
 Campos:
 - `v`: versão do protocolo.
-- `seq`: contador crescente para detectar repetição/perda.
-- `type`: categoria (`cmd`, `telemetry`, `event`, `ack` ou `fault`).
-- Campos adicionais dependem do tipo.
+- `seq`: contador para correlacionar comando e ACK.
+- `type`: categoria (`cmd`, `ack` ou `fault` na primeira implementação).
+- `name`: comando.
+- Campos restantes variam conforme o comando.
 
-A implementação deverá validar rigorosamente campos, tipos, limites e tamanho antes de executar. O envelope ainda precisa ganhar checksum/CRC antes de ser considerado resistente a corrupção; JSON por linha sozinho não fornece integridade criptográfica nem garantia de entrega.
+**Limitação conhecida da primeira versão:** `seq` ainda não implementa rejeição de mensagens repetidas ou fora de ordem; não deve ser tratado como proteção anti-replay. CRC/checksum também ainda não está implementado. A comunicação é um enlace local de protótipo, não um protocolo seguro contra um dispositivo malicioso conectado à UART.
 
-## Comandos iniciais previstos
+## Comandos implementados no esqueleto
 
-- `drive`: velocidade normalizada de cada lado entre -1.0 e 1.0, com TTL curto.
-- `stop`: parada imediata.
-- `set_led`: padrão de LEDs.
-- `beep_pattern`: identificador de padrão sonoro permitido (não frequência arbitrária ilimitada).
+- `drive`: velocidades normalizadas de cada lado entre -1.0 e 1.0 e `ttl_ms` entre 1 e 350.
+- `stop`: cancela a solicitação de movimento.
+- `beep_pattern`: padrões permitidos (`ack`, `thinking`, `error`, `obstacle`, `shutdown`).
+- `set_led`: liga/desliga o LED configurado.
 
-A Orange Pi não envia PWM bruto nem contorna os limites locais do ESP32.
-
-## Telemetria
-
-O ESP32 poderá informar:
-- estado operacional;
-- estado de segurança;
-- leituras de sensores;
-- contagem dos encoders;
-- tensão da bateria, se houver divisor/ADC devidamente projetado;
-- falhas e motivo da última parada.
+O ESP32 rejeita velocidades fora do intervalo e TTL inválido. O TTL é aplicado localmente, sem depender da Orange Pi. O driver dos motores permanece desabilitado no código (`NEXUS_MOTOR_OUTPUT_ENABLED=0)) até que hardware e pinagem sejam definidos.
 
 ## Regras obrigatórias
 
-1. Motores desabilitados durante boot e até entrar em estado seguro.
-2. Comando de movimento expira após `ttl_ms`; valor máximo limitado no firmware.
-3. Timeout de comunicação provoca parada local.
-4. Comando inválido, versão desconhecida ou sequência repetida é rejeitado.
-5. `stop` deve ter prioridade sobre qualquer comando de movimento.
-6. Após reinício ou reconexão, não retomar o último movimento.
-7. O ESP32 mantém limites de velocidade e intertravamentos independentemente da Orange Pi.
+1. Motores desabilitados durante boot.
+2. STOP cancela a solicitação de movimento.
+3. Comando de movimento expira localmente após seu TTL.
+4. Comando inválido ou fora dos limites não deve acionar os motores.
+5. Perda de comunicação não pode manter movimento indefinidamente; TTL curto é a proteção inicial.
+6. Após reinício, não retomar movimento automaticamente.
+7. O ESP32 mantém limites e intertravamentos independentemente da Orange Pi.
 
 ## Testes necessários
 
 - Mensagem fragmentada em múltiplas leituras.
 - Duas mensagens concatenadas.
 - JSON malformado e quadro acima do limite.
-- Sequência repetida ou fora de ordem.
+- TTL expirado durante movimento.
+- Velocidade e TTL fora dos limites.
 - Perda de UART durante movimento.
 - Reinício de cada lado da conexão.
-- TTL expirado e comando STOP prioritário.
+- STOP prioritário.
+- Futuramente: sequência repetida, checksum/CRC e negociação de sessão.
 
-Este é um contrato inicial para implementação; ainda não há firmware validado.
+Estado: contrato e código iniciais; testes físicos e firmware compilado **não validados**.
