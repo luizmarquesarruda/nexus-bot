@@ -1,12 +1,11 @@
 """Small serial transport; motor safety remains enforced by ESP32 firmware."""
 from __future__ import annotations
 
-import time
 from typing import Any
 
 import serial
 
-from .protocol import drive_frame, parse_response, stop_frame
+from .protocol import MAX_FRAME_BYTES, drive_frame, parse_response, stop_frame
 
 
 class UartLink:
@@ -29,15 +28,17 @@ class UartLink:
         self._send(stop_frame(self._next_seq()))
 
     def read_response(self) -> dict[str, Any] | None:
-        raw = self._serial.readline()
+        raw = self._serial.read_until(expected=b"\n", size=MAX_FRAME_BYTES + 1)
         if not raw:
             return None
+        if len(raw) > MAX_FRAME_BYTES or not raw.endswith(b"\n"):
+            self._serial.reset_input_buffer()
+            raise ValueError("UART response is incomplete or exceeds frame limit")
         return parse_response(raw.strip())
 
     def close(self) -> None:
         try:
             self.stop()
-            time.sleep(0.03)
         finally:
             self._serial.close()
 
