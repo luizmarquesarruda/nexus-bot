@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <math.h>
 
-// Pinagem UART2 é provisória para ESP32 DevKit clássico.
+// Pinagem UART2 provisória para ESP32 DevKit clássico.
 // Confirmar conflitos com a placa/periféricos antes da montagem.
 #ifndef NEXUS_UART_BAUD
 #define NEXUS_UART_BAUD 115200
@@ -13,41 +14,42 @@
 #define NEXUS_UART_TX_PIN 17
 #endif
 
-// O driver/motores ainda não foram escolhidos. Por segurança, a saída física
-// permanece desabilitada até existir pinagem e driver aprovados.
+// Driver/motores ainda não foram escolhidos. A saída física fica desabilitada.
 #ifndef NEXUS_MOTOR_OUTPUT_ENABLED
 #define NEXUS_MOTOR_OUTPUT_ENABLED 0
 #endif
 
-static constexpr uint32_t COMMAND_TIMEOUT_MS = 350;
+static constexpr uint32_t MAX_COMMAND_TTL_MS = 350;
 static constexpr size_t MAX_LINE_LENGTH = 256;
 static constexpr int BUZZER_PIN = 25; // Provisório; validar placa e circuito.
-static constexpr int LED_PIN = 2;     // LED onboard comum em algumas DevKits.
+static constexpr int LED_PIN = 2;     // Presente em algumas DevKits, não em todas.
 
 HardwareSerial &linkSerial = Serial2;
 String inputLine;
-uint32_t lastDriveCommandMs = 0;
+uint32_t driveDeadlineMs = 0;
 bool movingRequested = false;
 
 void stopMotors() {
   movingRequested = false;
 #if NEXUS_MOTOR_OUTPUT_ENABLED
-  // TODO: implementar somente após selecionar driver e validar pinagem.
+  // TODO: desabilitar fisicamente o driver após seleção e validação do hardware.
 #endif
 }
 
-void setMotorSpeeds(float left, float right) {
-  // Limites locais independem da Orange Pi.
-  left = constrain(left, -1.0f, 1.0f);
-  right = constrain(right, -1.0f, 1.0f);
+bool validSpeed(float value) {
+  return isfinite(value) && value >= -1.0f && value <= 1.0f;
+}
+
+void setMotorSpeeds(float left, float right, uint32_t ttlMs) {
 #if NEXUS_MOTOR_OUTPUT_ENABLED
   // TODO: aplicar PWM/direção ao driver definido.
 #else
+  // A V1 inicial compila sem acionar motores: driver e pinagem não aprovados.
   (void)left;
   (void)right;
 #endif
   movingRequested = (left != 0.0f || right != 0.0f);
-  lastDriveCommandMs = millis();
+  driveDeadlineMs = millis() + ttlMs;
 }
 
 void beepPattern(const char *pattern) {
@@ -78,16 +80,20 @@ void sendAck(uint32_t seq, const char *status) {
   sendMessage(response);
 }
 
+void sendFault(const char *reason) {
+  JsonDocument fault;
+  fault["v"] = 1;
+  fault["type"] = "fault";
+  fault["reason"] = reason;
+  sendMessage(fault);
+}
+
 void handleLine(const String &line) {
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, line);
   if (error || !doc["v"].is<int>() || doc["v"].as<int>() != 1 ||
       !doc["seq"].is<uint32_t>() || !doc["type"].is<const char *>()) {
-    JsonDocument fault;
-    fault["v"] = 1;
-    fault["type"] = "fault";
-    fault["reason"] = "invalid_frame";
-    sendMessage(fault);
+    sendFault("invalid_frame");
     return;
   }
 
@@ -100,7 +106,7 @@ void handleLine(const String &line) {
     return;
   }
 
-  // STOP sempre é aceito antes de qualquer outra validação de movimento.
+  // STOP é tratado antes dos demais comandos e sempre resulta em saída parada.
   if (strcmp(name, "stop") == 0) {
     stopMotors();
     sendAck(seq, "stopped");
@@ -110,16 +116,21 @@ void handleLine(const String &line) {
   if (strcmp(name, "drive") == 0) {
     if (!doc["left"].is<float>() || !doc["right"].is<float>() ||
         !doc["ttl_ms"].is<uint32_t>()) {
+      stopMotors();
       sendAck(seq, "invalid_drive");
       return;
     }
+
+    const float left = doc["left"].as<float>();
+    const float right = doc["right"].as<float>();
     const uint32_t ttl = doc["ttl_ms"].as<uint32_t>();
-    if (ttl == 0 || ttl > COMMAND_TIMEOUT_MS) {
+    if (!validSpeed(left) || !validSpeed(right) || ttl == 0 || ttl > MAX_COMMAND_TTL_MS) {
       stopMotors();
-      sendAck(seq, "ttl_out_of_range");
+      sendAck(seq, "drive_out_of_range");
       return;
     }
-    setMotorSpeeds(doc["left"].as<float>(), doc["right"].as<float>());
+
+    setMotorSpeeds(left, right, ttl);
     sendAck(seq, "accepted");
     return;
   }
@@ -151,7 +162,6 @@ void setup() {
   Serial.begin(115200);
   linkSerial.begin(NEXUS_UART_BAUD, SERIAL_8N1, NEXUS_UART_RX_PIN, NEXUS_UART_TX_PIN);
   inputLine.reserve(MAX_LINE_LENGTH);
-  lastDriveCommandMs = millis();
 }
 
 void loop() {
@@ -164,23 +174,16 @@ void loop() {
       if (inputLine.length() >= MAX_LINE_LENGTH) {
         inputLine = "";
         stopMotors();
-        JsonDocument fault;
-        fault["v"] = 1;
-        fault["type"] = "fault";
-        fault["reason"] = "frame_too_large";
-        sendMessage(fault);
+        sendFault("frame_too_large");
       } else {
         inputLine += c;
       }
     }
   }
 
-  if (movingRequested && (millis() - lastDriveCommandMs > COMMAND_TIMEOUT_MS)) {
+  // TTL é aplicado localmente pelo ESP32, sem depender da Orange Pi.
+  if (movingRequested && static_cast<int32_t>(millis() - driveDeadlineMs) >= 0) {
     stopMotors();
-    JsonDocument fault;
-    fault["v"] = 1;
-    fault["type"] = "fault";
-    fault["reason"] = "command_timeout";
-    sendMessage(fault);
+    sendFault("command_timeout");
   }
 }
