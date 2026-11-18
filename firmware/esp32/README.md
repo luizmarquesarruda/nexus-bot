@@ -1,19 +1,32 @@
 # Firmware ESP32
 
-Firmware do controlador embarcado do NEXUS BOT.
+Projeto inicial PlatformIO para ESP32 DevKit clássico, usando framework Arduino e ArduinoJson.
 
-Responsabilidades:
-- Controle dos motores via driver externo.
-- Leitura de sensores e encoders.
-- Watchdog e parada segura por timeout UART.
-- Controle de LEDs e buzzer piezo passivo.
-- Publicação de telemetria e eventos.
+## O que o esqueleto faz
 
-Regras:
-- Motores iniciam desabilitados.
-- Nunca confiar na Orange Pi para limites críticos.
-- Rejeitar comandos inválidos ou expirados.
-- Perda de comunicação deve parar o robô.
-- Não retomar movimento automaticamente após reconexão.
+- Recebe quadros JSON por UART2 a 115200 bps.
+- Valida versão, tipo e campos básicos.
+- Responde com ACK ou evento de falha.
+- Aplica limites de velocidade e TTL aos comandos drive.
+- Expira localmente a solicitação de movimento.
+- Controla padrões sonoros no buzzer e um LED configurável.
 
-A implementação ainda não foi iniciada. Plataforma, framework (Arduino-ESP32 ou ESP-IDF) e pinagem serão escolhidos após definição da placa e periféricos.
+## Segurança e limitações
+
+- `NEXUS_MOTOR_OUTPUT_ENABLED=0` por padrão: nenhuma saída física de motor está implementada.
+- Driver, motores e pinagem ainda não foram escolhidos.
+- UART RX16/TX17, buzzer GPIO25 e LED GPIO2 são referências provisórias; verificar a placa real antes de ligar qualquer circuito.
+- O TTL é limitado a 350 ms no firmware.
+- O campo de sequência ainda não bloqueia replay ou mensagens fora de ordem.
+- Não há checksum/CRC, sensores, encoders, watchdog externo ou circuito de emergência implementados.
+
+## Compilar
+
+Com PlatformIO instalado:
+
+```bash
+cd firmware/esp32
+pio run
+```
+
+A compilação e o teste em placa física ainda estão **não validados**.
