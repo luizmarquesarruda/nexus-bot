@@ -1,44 +1,41 @@
 # NEXUS BOT
 
-Robô assistente móvel de pequeno porte, com arquitetura híbrida: Orange Pi como unidade de processamento de alto nível e ESP32 como controlador de tempo real para movimento, sensores e sinais sonoros.
+Robô móvel compacto, com controle embarcado por microcontrolador e câmera independente. A V1 prioriza movimento confiável, segurança física, identificação de pontos por NFC e localização externa por GPS quando houver céu aberto.
 
-O protótipo V1 será instalado em um barril Heineken de 5 litros. As dimensões internas ainda precisam ser medidas; por isso, motores, rodas, bateria e estrutura não estão dimensionados.
+O corpo será cilíndrico e a locomoção será exclusivamente por rodas na parte inferior. As dimensões internas ainda precisam ser medidas; motores, rodas, bateria e estrutura não estão dimensionados.
+
+## Arquitetura V1 aprovada
+
+- **1 ESP32 convencional principal:** motores, encoders, sensores anticolisão, emergência, GPS, NFC, sensores ambientais, Pan-Tilt da câmera, bateria e coordenação.
+- **1 ESP32-CAM independente:** captura e transmissão de vídeo. Não controla motores nem funções de segurança.
+- **Sem IA embarcada e sem Orange Pi** na V1.
+- **Sem três ESP32 Mini:** GPS, NFC e sensores ambientais serão conectados ao ESP32 principal.
+- Um segundo ESP32 convencional só será considerado se testes demonstrarem uma limitação concreta de GPIO, processamento, barramentos ou distribuição física.
+- Um único Pan-Tilt para a câmera.
+- Buzzer piezo passivo com padrões sonoros próprios; sem alto-falante ou voz falada.
 
 ## Estado do projeto
 
-- [x] Repositório público `nexus-bot`.
-- [x] Plataforma de computação definida: Orange Pi 4 Pro, Allwinner A733, 4 GB RAM.
-- [x] Runtime local escolhido: `llama.cpp`; Ollama está descartado.
-- [x] Estratégia de autonomia evolutiva supervisionada definida: nível 2,5.
-- [x] Um ESP32 principal e dois ESP32 Mini previstos para controle distribuído.
-- [x] Saída sonora definida por buzzer piezo passivo; sem alto-falante ou fala sintetizada.
-- [ ] Validar placa, revisão, Linux, drivers, temperatura e consumo.
-- [ ] Medir o interior do barril e dimensionar a mecânica.
-- [ ] Fechar lista de materiais e custo total dentro do orçamento-alvo de R$ 800.
-- [ ] Implementar e testar o AI CORE, memória e NEXUS DEVELOPER.
-- [ ] Implementar firmware, comunicação UART e testes de segurança.
-- [ ] Integrar visão híbrida e hardware físico.
-
-## Arquitetura resumida
-
-- **Orange Pi 4 Pro A733/4 GB:** cérebro Linux e serviços de alto nível. Plataforma escolhida, ainda não validada em bancada.
-- **IA local:** `llama.cpp`; Qwen2.5-0.5B-Instruct GGUF Q8_0 é o primeiro candidato experimental, sujeito a benchmark.
-- **Memória:** SQLite com FTS5 inicialmente; busca semântica fica para uma etapa posterior se os recursos permitirem.
-- **ESP32 principal:** controle de motores, sensores críticos, watchdog e parada segura.
-- **Dois ESP32 Mini:** periféricos e sensores auxiliares, com divisão final ainda pendente de validação.
-- **Ligação:** UART com protocolo versionado, mensagens delimitadas, timeout, validade curta dos comandos e integridade.
-- **Som:** buzzer piezo passivo com padrões originais. Sem alto-falante, voz falada ou síntese de fala.
-- **Visão:** estratégia híbrida; OpenCV primeiro e aceleração/modelos adicionais somente após testes compatíveis com a placa.
-- **Autonomia:** nível 2,5 — desenvolve e testa melhorias de baixo risco em ambiente isolado; alterações importantes exigem aprovação humana.
+- [x] Arquitetura V1 simplificada aprovada e registrada.
+- [x] Controlador principal único ESP32 definido.
+- [x] ESP32-CAM independente definida para vídeo.
+- [ ] Selecionar modelos exatos das placas e módulos.
+- [ ] Medir o interior do corpo e definir massa/centro de gravidade.
+- [ ] Dimensionar motores, rodas, driver e bateria.
+- [ ] Definir pinagem, barramentos e alimentação.
+- [ ] Implementar e testar firmware do ESP32 principal.
+- [ ] Integrar e testar GPS, NFC, sensores e Pan-Tilt.
+- [ ] Validar vídeo e coexistência com o controlador principal.
+- [ ] Executar testes de segurança, consumo, interferência e autonomia.
 
 ## Princípios de engenharia
 
-1. Segurança de movimento não depende da IA nem da conexão com a Orange Pi.
-2. ESP32 pode rejeitar qualquer comando; perda de comunicação ou falha crítica leva os motores ao estado parado.
-3. NEXUS DEVELOPER não pode alterar o próprio mecanismo de autorização ou as proteções físicas.
-4. Código gerado deve passar por sandbox, testes, classificação de risco e possibilidade de rollback.
-5. Motores não são alimentados pelos pinos da Orange Pi ou do ESP32.
-6. Não assumir dimensões, autonomia, corrente, desempenho ou compatibilidade sem medição.
-7. Recursos não testados em hardware real devem ser identificados como **não validados**.
+1. A parada de emergência deve desabilitar fisicamente a tração e não depender de rede ou software de alto nível.
+2. Sensores anticolisão ficam ligados ao ESP32 principal.
+3. Falha de GPS, NFC ou câmera não pode impedir a parada segura.
+4. Não adicionar microcontroladores sem necessidade demonstrada por testes.
+5. Separar e dimensionar a alimentação de motores, servos e lógica.
+6. Não assumir dimensões, correntes, autonomia ou compatibilidade sem medição.
+7. Recursos sem teste físico devem ser identificados como **não validados**.
 
-Consulte [o diário de bordo](docs/diario-de-bordo.md) para decisões, correções, validações e próximos passos.
+Consulte [o diário de bordo](docs/diario-de-bordo.md) para decisões cronológicas e [a arquitetura](docs/arquitetura.md) para responsabilidades dos módulos.
