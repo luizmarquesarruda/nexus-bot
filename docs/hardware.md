@@ -1,78 +1,64 @@
 # Hardware — requisitos e seleção preliminar
 
-Este documento separa decisões de arquitetura, candidatos e itens ainda não validados. A presença de um componente nesta lista não autoriza compra automática.
+Este documento separa decisões aprovadas, candidatos e itens pendentes. A inclusão de um componente não autoriza compra automática.
 
-## Computação e controle
+## Controladores
 
-| Bloco | Definição/candidato | Situação |
+| Bloco | Definição | Situação |
 |---|---|---|
-| SBC principal | Orange Pi 4 Pro, Allwinner A733, 4 GB RAM | Plataforma definida; variante, revisão, Linux, drivers, consumo e temperatura ainda precisam ser verificados na placa física |
-| Runtime de IA | `llama.cpp` | Escolhido; ainda não validado na placa |
-| Modelo inicial | Qwen2.5-0.5B-Instruct GGUF Q8_0 | Candidato de benchmark, não decisão final de desempenho |
-| MCU principal | ESP32 convencional/DevKit | Quantidade e papel definidos; modelo exato pendente |
-| MCUs auxiliares | Dois ESP32 Mini | Previstos; variantes e responsabilidades finais pendentes |
-| Armazenamento | microSD de boa procedência | Estratégia inicial; capacidade/classe a selecionar conforme disponibilidade e testes |
-| Saída sonora | Buzzer piezo passivo, preferencialmente 3,3 V | Decisão funcional; corrente e circuito de acionamento precisam ser conferidos |
-| Câmera | Módulo compatível com Linux/CSI ou USB | Não selecionada |
-| Microfone/voz | Não é requisito aprovado na arquitetura atual | Não comprar sem reabrir a decisão |
+| MCU principal | Um ESP32 convencional | Arquitetura aprovada; modelo/placa exatos pendentes |
+| Câmera | Uma ESP32-CAM independente | Arquitetura aprovada; variante e antena pendentes |
+| ESP32 Mini auxiliares | Não usar na V1 | Descartados para a primeira versão |
+| Segundo ESP32 convencional | Somente se testes justificarem | Não previsto inicialmente |
 
-## Distribuição proposta dos microcontroladores
+## Periféricos previstos no ESP32 principal
 
-- ESP32 convencional: motores, sensores críticos, watchdog, validação de comandos e parada segura.
-- ESP32 Mini 1: sensores auxiliares.
-- ESP32 Mini 2: monitoramento de energia, buzzer e periféricos.
+| Periférico | Candidato/interface | Observações |
+|---|---|---|
+| GPS | Módulo GNSS com antena, UART | Uso externo; validar antena, fixação e recepção |
+| NFC | PN532, SPI ou I²C | Etiquetas passivas; alcance depende da antena, montagem e superfície |
+| Sensores ambientais | I²C/GPIO | Selecionar somente os sensores úteis à V1 |
+| Encoders | GPIO/interrupts | Necessários para estimativa de deslocamento e velocidade |
+| Anticolisão | ToF/ultrassônico e bumpers | Sensores críticos ligados diretamente ao principal |
+| Pan-Tilt | Um conjunto com dois eixos | Exclusivo para orientar a câmera; servos ainda não selecionados |
+| Buzzer | Piezo passivo | Sem alto-falante ou voz falada |
+| Bateria | Química/tensão/capacidade em aberto | Dimensionar após motores e consumo medidos |
 
-A distribuição dos auxiliares é uma proposta de organização, não um pinout aprovado. Confirmar variantes, GPIO disponíveis, níveis lógicos, alimentação e comunicação antes de desenvolver a placa/cabeamento.
+## Câmera
 
-## Armazenamento e software
-
-Começar com microSD. SSD M.2/NVMe não é requisito da primeira versão. Reduzir gravações desnecessárias, usar logs rotativos e agrupar gravações persistentes. SQLite/FTS5 é a memória inicial; embeddings só serão avaliados depois de medir recursos reais.
+ESP32-CAM independente para captura e transmissão de vídeo. Confirmar variante, sensor, qualidade necessária, disponibilidade de PSRAM, antena/conector, método de transmissão e consumo. A câmera não participa do circuito de emergência nem controla os motores.
 
 ## Mobilidade
 
-O NEXUS BOT não terá pernas. A locomoção será feita exclusivamente por rodas instaladas na parte inferior do corpo cilíndrico. A base de tração deverá ser estruturalmente independente da carcaça externa e, preferencialmente, removível para manutenção.
+A locomoção será exclusivamente por rodas instaladas na parte inferior do corpo cilíndrico. Não haverá pernas laterais.
 
-Duas rodas motrizes e uma roda auxiliar são uma configuração candidata, ainda não aprovada. Não escolher quantidade/posição final, motor, driver, roda ou bateria até:
-1. medir altura útil, diâmetro interno, abertura, pontos de fixação e obstáculos internos do barril;
-2. estimar massa total e distribuição de peso/centro de gravidade;
-3. definir velocidade, inclinação e piso desejados;
-4. levantar corrente nominal e corrente de bloqueio dos motores;
+Não fechar motores, rodas, driver ou bateria até:
+1. medir altura útil, diâmetro interno, abertura e pontos de fixação;
+2. estimar massa total e centro de gravidade;
+3. definir piso, velocidade e inclinação esperados;
+4. obter corrente nominal e corrente de bloqueio dos motores;
 5. calcular torque, autonomia e margem térmica.
 
-Driver de motor deve ser dimensionado pela corrente de bloqueio e dissipação, não apenas pela corrente nominal.
-
-## Sensores a avaliar
-
-- ToF frontal para distância/obstáculos.
-- Bumpers físicos como camada redundante.
-- Sensores inferiores para bordas/queda, caso o ambiente inclua risco de escadas.
-- Encoders para odometria básica.
-- IMU somente se trouxer benefício demonstrável na V1.
+O driver deve ser dimensionado pela corrente de bloqueio e dissipação, não apenas pela corrente nominal.
 
 ## Energia e segurança
 
-Separar alimentação dos motores e alimentação lógica. A Orange Pi e os ESP32 não fornecem corrente aos motores. Prever bateria com BMS adequado à química e número de células, fusível próximo à fonte, chave geral, proteção contra polaridade/transientes, conversores DC-DC com margem e corte físico independente da alimentação dos motores.
+- Separar alimentação de motores, servos e lógica.
+- Não alimentar motores pelos pinos do ESP32.
+- Prever fusível próximo à fonte, chave geral, proteção de polaridade e conversores DC-DC dimensionados com margem.
+- O circuito de emergência deve desabilitar fisicamente a tração.
+- Verificar ruído dos motores/servos e seus efeitos sobre GPS, NFC, câmera e leituras analógicas.
+- Não definir bateria, bitola ou reguladores antes de fechar os componentes e medir consumo.
 
-Não definir tensão, capacidade de bateria, bitola ou driver sem fechar motores e orçamento de potência. Confirmar se o buzzer pode ser acionado pelo GPIO; usar transistor/MOSFET se a corrente exigir.
+## Critérios de seleção e compra
 
-## Limite financeiro
+- Conferir modelo e revisão exatos, documentação e pinagem.
+- Confirmar tensão lógica, corrente de pico e compatibilidade de interfaces.
+- Verificar dimensões e conectores reais do anúncio.
+- Comparar custo total com frete e tributos.
+- Preferir peças com documentação e reposição.
+- Não comprar com base apenas em descrições genéricas de marketplace.
 
-Orçamento-alvo global da V1: até R$ 800, aceitando usados quando houver procedência e teste. O custo só será considerado fechado quando incluir SBC, placas ESP32, microSD, câmera/sensores, buzzer, motores, driver, rodas, bateria, BMS, conversores, proteção, cabos, conectores, estrutura, frete e tributos.
+## Estado
 
-## Critérios de compra
-
-- Compatibilidade documentada com Orange Pi 4 Pro/A733 e Linux escolhido.
-- Corrente contínua e de pico com margem.
-- Dimensões e fixação compatíveis com as medidas reais do barril.
-- Custo total, incluindo frete e tributos.
-- Documentação e possibilidade de reposição.
-- Não comprar com base apenas em descrição genérica de marketplace.
-
-
-## Cúpula impressa em 3D
-
-A cúpula será projetada para impressão 3D. Material, geometria final, espessura, segmentação, suportes internos e acabamento permanecem pendentes.
-
-A rotação ainda não foi decidida. Comparar cúpula fixa, giro limitado e giro contínuo antes de selecionar servo, motorredutor, rolamento, transmissão ou anel deslizante. Considerar massa/inércia, ruído, folga, velocidade, posição, limite mecânico, alimentação, torção/roteamento dos cabos e manutenção. Não comprar mecanismo de giro nesta etapa.
-
-A cúpula não deve receber a Orange Pi. Reservar nela apenas espaço para componentes que forem efetivamente definidos, como câmera ou sensores. O processamento e os componentes que dissipam mais calor permanecem no corpo, com ventilação adequada.
+A arquitetura de controladores foi aprovada, mas placas, sensores, motores, driver, bateria, circuito de emergência e estrutura ainda precisam ser selecionados e testados. Não há validação física declarada nesta atualização.
