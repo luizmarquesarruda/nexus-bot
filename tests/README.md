@@ -36,3 +36,18 @@ A estratégia de testes acompanha a arquitetura embarcada: ESP32 convencional pr
 ## Critério de aceite
 
 Nenhum teste será marcado como aprovado sem execução e registro do resultado. Testes ainda não executados devem constar como **não validados**. Testes de emergência devem ser realizados primeiro em bancada, com tração mecanicamente segura e procedimento de corte acessível.
+
+
+## Testes automatizados iniciais
+
+O núcleo de segurança C++ pode ser testado sem ESP32, driver ou motores:
+
+```sh
+cmake -S tests/host -B build/host
+cmake --build build/host --parallel
+ctest --test-dir build/host --output-on-failure
+```
+
+Os testes cobrem inicialização fail-closed, armamento explícito, prioridade e retenção de emergência, falha crítica e reset sem retomada automática. Eles validam a lógica de software, não o circuito elétrico nem o comportamento físico.
+
+O workflow `.github/workflows/firmware.yml` executa os testes de host e compila o alvo genérico PlatformIO. Resultado de CI e compilação só devem ser declarados aprovados após execução no GitHub. Testes elétricos, de sensores, tração, câmera, consumo e autonomia permanecem **não validados**.
