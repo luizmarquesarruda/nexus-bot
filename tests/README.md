@@ -1,31 +1,38 @@
-# Estratégia de testes
+# Estratégia de testes — NEXUS BOT V1
 
-## Testes de software
+A estratégia de testes acompanha a arquitetura embarcada: ESP32 convencional principal e ESP32-CAM independente. Não há testes de Orange Pi, SBC, LLM, SQLite, reconhecimento de fala ou enlace UART com computador de alto nível na V1.
 
-- Parser e validação do protocolo UART.
-- Máquina de estados do assistente.
-- Expiração de comandos e tratamento de falhas.
-- Persistência e recuperação do SQLite.
-- Tratamento de falhas de reconhecimento de fala.
+## Testes de firmware do ESP32 principal
 
-## Testes de firmware em bancada
-
-- Boot com motores desabilitados.
-- STOP prioritário.
-- Timeout UART durante movimento.
-- Bumper e sensor de distância.
+- Boot com driver de tração desabilitado.
+- Estado seguro após reset, watchdog e brownout.
+- Parada de emergência física independente de Wi-Fi e câmera.
+- Timeout de comando e parada após perda de comunicação com o operador.
+- Rejeição de comandos inválidos, fora de faixa ou expirados.
+- Sensores anticolisão: leituras válidas, inválidas, antigas e desconectadas.
+- Bumpers e prioridade de parada.
 - Encoders e controle de velocidade.
-- Buzzer e LEDs.
-- Reinício do ESP32 e da Orange Pi sem retomada involuntária.
+- GPS, NFC e sensores ambientais individualmente.
+- Pan-Tilt e buzzer.
+- Monitoramento de bateria e comportamento em baixa tensão.
 
-## Testes integrados
+## Testes da ESP32-CAM
 
-- Orange Pi desconectada durante movimento.
-- Ruído elétrico de motores na UART e alimentação lógica.
-- Reconexão e recuperação de estado.
-- Comandos de voz em português em ambiente silencioso e ruidoso.
-- Temperatura e consumo sob carga contínua.
+- Inicialização e estabilidade de captura.
+- Transmissão de vídeo e reconexão.
+- Consumo e temperatura.
+- Coexistência com o ESP32 principal sem bloquear tarefas críticas.
+- Falha, reinício ou desconexão da câmera sem afetar a parada segura.
+
+## Testes elétricos e mecânicos
+
+- Polaridade, tensão, continuidade e ausência de curto.
+- Corrente de partida e bloqueio dos motores.
+- Capacidade térmica do driver e conversores.
+- Ruído dos motores/servos sobre sensores, GPS, NFC e rádio.
+- Fixação, centro de gravidade, estabilidade e tração.
+- Autonomia medida em condições registradas.
 
 ## Critério de aceite
 
-Nenhum teste será marcado como aprovado sem execução e registro do resultado. Testes ainda não executados devem constar como **não validados**.
+Nenhum teste será marcado como aprovado sem execução e registro do resultado. Testes ainda não executados devem constar como **não validados**. Testes de emergência devem ser realizados primeiro em bancada, com tração mecanicamente segura e procedimento de corte acessível.
