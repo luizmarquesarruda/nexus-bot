@@ -112,3 +112,14 @@ Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem
 68. **Segurança:** sensores anticolisão e circuito de parada devem permanecer ligados ao ESP32 principal. A parada de emergência deve desabilitar fisicamente a tração, sem depender da ESP32-CAM, de rede ou de software de alto nível. Perda de câmera, GPS ou NFC não pode impedir a parada segura.
 69. **Plano de validação atualizado:** primeiro validar o ESP32 principal em bancada com alimentação protegida, driver, motores, encoders e emergência; depois integrar periféricos um a um (sensores, NFC, GPS e Pan-Tilt); validar a ESP32-CAM separadamente e, por último, testar coexistência, interferência, consumo e falhas. Nenhum desses testes é declarado concluído por esta decisão documental.
 70. **Documentação:** README, arquitetura, hardware e software foram alinhados à arquitetura V1 sem IA embarcada e sem três ESP32 Mini. Modelos exatos das placas, pinagem, bateria, motores, sensores, câmera e custos continuam pendentes de seleção e teste.
+
+
+## 2026-11-19 — limpeza documental ESP32-only
+
+71. **Escopo da limpeza:** consolidar a V1 exclusivamente na arquitetura embarcada já aprovada: um ESP32 convencional principal e uma ESP32-CAM independente para vídeo.
+72. **Removido do conteúdo ativo:** documento de protocolo UART Orange Pi–ESP32 e diretórios de documentação de IA, serviço assistant e memória SQLite associados à arquitetura SBC abandonada. O histórico dessas decisões permanece preservado neste diário como registro, não como requisito vigente.
+73. **Documentação elétrica revisada:** retiradas dependências da Orange Pi e da UART; reforçada a separação entre potência, lógica e servos, além da emergência física independente de Wi-Fi e câmera.
+74. **Firmware e testes:** READMEs alinhados ao controlador ESP32 principal e à ESP32-CAM independente. A implementação real, pinagem, compilação e ensaios físicos continuam **não validados**.
+75. **PR #1:** o esqueleto anterior inclui cliente Python e dependência de UART com computador de alto nível, incompatíveis com a arquitetura atual. Deve permanecer fora da V1 e ser encerrado como proposta supersedida; sua branch e histórico não são apagados.
+76. **Sem alteração de hardware presumido:** modelos exatos, driver, motores, sensores, bateria, pinagem e interface de vídeo continuam pendentes de seleção e validação.
+77. **Sem CI ou validação física declarada:** esta limpeza é documental/estrutural. Não comprova compilação, funcionamento do firmware, vídeo, autonomia ou segurança física.
