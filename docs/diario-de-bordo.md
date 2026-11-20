@@ -142,3 +142,5 @@ Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem
 88. Foi aberta a PR #3 — ESP32 V1: base de firmware e supervisão de segurança — em rascunho, com base na branch cleanup/esp32-only-v1. A PR #3 depende da PR #2 e não foi mesclada.
 89. O run 44662693297 foi inspecionado por job: Host safety tests e ESP32 firmware compile concluíram com success. Nenhum teste físico foi executado.
 90. A main permanece inalterada. As PRs #2 e #3 seguem abertas e não mescladas; a sequência de dependência deve ser preservada antes de integrar as alterações à main.
+
+91. A CI da PR #3 executada no run 44663092863, commit d6f3b3b1929544c71dcda7ce255879ffafeea341, concluiu com sucesso nos jobs Host safety tests e ESP32 firmware compile. O registro é válido para o código-fonte testado nesse SHA; a atualização subsequente do diário não alterou firmware nem workflow. Testes físicos seguem **não validados**.
