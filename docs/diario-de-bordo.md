@@ -123,3 +123,24 @@ Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem
 75. **PR #1:** o esqueleto anterior inclui cliente Python e dependência de UART com computador de alto nível, incompatíveis com a arquitetura atual. Deve permanecer fora da V1 e ser encerrado como proposta supersedida; sua branch e histórico não são apagados.
 76. **Sem alteração de hardware presumido:** modelos exatos, driver, motores, sensores, bateria, pinagem e interface de vídeo continuam pendentes de seleção e validação.
 77. **Sem CI ou validação física declarada:** esta limpeza é documental/estrutural. Não comprova compilação, funcionamento do firmware, vídeo, autonomia ou segurança física.
+
+
+## 2026-11-20 — auditoria técnica e início do código ESP32-only
+
+78. A auditoria confirmou que a PR #2 (limpeza ESP32-only) permanecia aberta em rascunho; portanto, a branch main ainda conservava documentos e diretórios da arquitetura SBC/Orange Pi. A branch de limpeza foi mantida sem merge.
+79. A PR #1 foi confirmada como fechada sem merge. Seu firmware foi inspecionado como referência histórica; não foi copiado diretamente porque estava acoplado a UART/Orange Pi, usava GPIOs provisórios e não implementava emergência física, sensores críticos nem proteção anti-replay.
+80. Foi criada a branch feat/esp32-core-safety-v1 a partir de cleanup/esp32-only-v1, mantendo uma fase de código separada da fase de limpeza.
+81. Foi adicionada arquitetura de software em camadas: interface do operador futura, aplicação/orquestração, supervisão de segurança, domínio de movimento, domínio de sensores, HAL/drivers e diagnóstico.
+82. Foi iniciado o firmware do ESP32 principal com PlatformIO e um núcleo C++ de supervisão de segurança independente do Arduino. Os estados previstos são BOOT, SAFE, ARMED, EMERGENCY_STOP_LATCHED e FAULT_LATCHED.
+83. As entradas de saúde começam em falso. Sem placa, circuito de emergência, driver e sensores selecionados, o firmware permanece em estado bloqueado. Nenhuma GPIO foi atribuída e nenhuma saída de tração foi implementada ou habilitada.
+84. Foi criado teste de host em CMake para inicialização fail-closed, armamento explícito, retenção de emergência/falha e reset para SAFE sem retomada de movimento.
+85. Foi adicionado workflow de CI para testes de host e compilação PlatformIO. O run de push 44662693297 concluiu com sucesso nos dois jobs: Host safety tests e ESP32 firmware compile. Essa validação cobre o código e a configuração presentes no commit do run; não comprova hardware.
+86. Foi reservada a pasta firmware/esp32-cam com seus limites de segurança. O código específico da câmera ficou pendente da confirmação do modelo, sensor, PSRAM, alimentação e interface.
+87. O alvo PlatformIO esp32dev é genérico e provisório para compilação. Não representa seleção de placa física. Pinagem, esquema elétrico, driver, motores, sensores, circuito físico de emergência, integração de vídeo e testes em hardware permanecem **não validados**.
+
+
+88. Foi aberta a PR #3 — ESP32 V1: base de firmware e supervisão de segurança — em rascunho, com base na branch cleanup/esp32-only-v1. A PR #3 depende da PR #2 e não foi mesclada.
+89. O run 44662693297 foi inspecionado por job: Host safety tests e ESP32 firmware compile concluíram com success. Nenhum teste físico foi executado.
+90. A main permanece inalterada. As PRs #2 e #3 seguem abertas e não mescladas; a sequência de dependência deve ser preservada antes de integrar as alterações à main.
+
+91. A CI da PR #3 executada no run 44663092863, commit d6f3b3b1929544c71dcda7ce255879ffafeea341, concluiu com sucesso nos jobs Host safety tests e ESP32 firmware compile. O registro é válido para o código-fonte testado nesse SHA; a atualização subsequente do diário não alterou firmware nem workflow. Testes físicos seguem **não validados**.

@@ -39,3 +39,15 @@ O corpo será cilíndrico e a locomoção será exclusivamente por rodas na part
 7. Recursos sem teste físico devem ser identificados como **não validados**.
 
 Consulte [o diário de bordo](docs/diario-de-bordo.md) para decisões cronológicas e [a arquitetura](docs/arquitetura.md) para responsabilidades dos módulos.
+
+
+## Código e estrutura de firmware
+
+A estrutura inicial compilável do ESP32 principal está em [firmware/esp32](firmware/esp32/README.md). A documentação de camadas, fluxo, estados de segurança e sequência de integração está em [docs/arquitetura-software.md](docs/arquitetura-software.md).
+
+- ESP32 principal: núcleo lógico de segurança independente de Arduino, com saídas de tração ainda não implementadas.
+- ESP32-CAM: diretório separado; o firmware específico aguarda a confirmação da variante da placa e do sensor.
+- Testes locais do núcleo: `cmake -S tests/host -B build/host && cmake --build build/host && ctest --test-dir build/host --output-on-failure`.
+- Compilação ESP32: `pio run --project-dir firmware/esp32 --environment esp32dev`.
+
+O alvo PlatformIO esp32dev é apenas uma configuração genérica e provisória de compilação. Placa física, GPIOs, driver, motores, sensores, circuito de emergência, vídeo e validação em bancada permanecem **não validados**.
