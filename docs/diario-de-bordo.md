@@ -134,6 +134,11 @@ Executar a Fase 1: confirmar a placa Orange Pi 4 Pro exata e preparar uma imagem
 82. Foi iniciado o firmware do ESP32 principal com PlatformIO e um núcleo C++ de supervisão de segurança independente do Arduino. Os estados previstos são BOOT, SAFE, ARMED, EMERGENCY_STOP_LATCHED e FAULT_LATCHED.
 83. As entradas de saúde começam em falso. Sem placa, circuito de emergência, driver e sensores selecionados, o firmware permanece em estado bloqueado. Nenhuma GPIO foi atribuída e nenhuma saída de tração foi implementada ou habilitada.
 84. Foi criado teste de host em CMake para inicialização fail-closed, armamento explícito, retenção de emergência/falha e reset para SAFE sem retomada de movimento.
-85. Foi adicionado workflow de CI para testes de host e compilação PlatformIO. A existência do workflow não comprova execução ou aprovação; o resultado de CI permanece **não validado** até consulta ao GitHub.
+85. Foi adicionado workflow de CI para testes de host e compilação PlatformIO. O run de push 44662693297 concluiu com sucesso nos dois jobs: Host safety tests e ESP32 firmware compile. Essa validação cobre o código e a configuração presentes no commit do run; não comprova hardware.
 86. Foi reservada a pasta firmware/esp32-cam com seus limites de segurança. O código específico da câmera ficou pendente da confirmação do modelo, sensor, PSRAM, alimentação e interface.
 87. O alvo PlatformIO esp32dev é genérico e provisório para compilação. Não representa seleção de placa física. Pinagem, esquema elétrico, driver, motores, sensores, circuito físico de emergência, integração de vídeo e testes em hardware permanecem **não validados**.
+
+
+88. Foi aberta a PR #3 — ESP32 V1: base de firmware e supervisão de segurança — em rascunho, com base na branch cleanup/esp32-only-v1. A PR #3 depende da PR #2 e não foi mesclada.
+89. O run 44662693297 foi inspecionado por job: Host safety tests e ESP32 firmware compile concluíram com success. Nenhum teste físico foi executado.
+90. A main permanece inalterada. As PRs #2 e #3 seguem abertas e não mescladas; a sequência de dependência deve ser preservada antes de integrar as alterações à main.
