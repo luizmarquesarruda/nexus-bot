@@ -1,40 +1,31 @@
-# Firmware e software — NEXUS BOT
+# Organização do firmware — NEXUS BOT V1
 
-A V1 é um sistema embarcado convencional, sem Orange Pi, sem LLM e sem IA embarcada. O controle será feito pelo ESP32 principal; a ESP32-CAM será independente para vídeo.
+A V1 é uma arquitetura embarcada composta por um ESP32 convencional principal e uma ESP32-CAM independente. Não utiliza Orange Pi, SBC, LLM ou IA embarcada.
 
-## Firmware do ESP32 principal
+## ESP32 principal
 
-Responsabilidades:
-- Controle de motores e encoders.
+Responsável por:
+- Tração, motores e encoders.
 - Sensores anticolisão e bumpers.
-- Parada de emergência e estado seguro.
+- Emergência física, watchdog e estado seguro.
 - GPS, NFC e sensores ambientais.
-- Controle do Pan-Tilt da câmera.
+- Controle de um único Pan-Tilt da câmera.
 - Buzzer piezo passivo.
 - Monitoramento de bateria e diagnóstico.
-- Comunicação e comandos do operador.
+- Interface de comando do operador.
 
-Organizar o firmware em módulos independentes, com tarefas não bloqueantes, máquinas de estado, timeouts, watchdog e validação dos dados. Funções críticas de movimento não devem aguardar operações demoradas de GPS, NFC ou rede.
+Organizar o firmware em módulos independentes, com tarefas não bloqueantes, máquinas de estado explícitas, timeouts e validação de dados. Funções críticas de movimento não devem aguardar operações demoradas de GPS, NFC, câmera ou rede.
 
 ## ESP32-CAM
 
-Firmware separado para captura e transmissão de vídeo. Não controla motores, não implementa segurança de tração e não deve ser necessário para a locomoção básica. O protocolo de integração com o ESP32 principal será definido após selecionar a placa e testar a transmissão.
+Firmware separado para captura e transmissão de vídeo. Não controla motores, não implementa segurança de tração e não é requisito para a locomoção básica.
 
-## Interfaces candidatas
-
-- GPS: UART.
-- PN532: SPI ou I²C.
-- Sensores ambientais: I²C ou GPIO.
-- Encoders: GPIO com interrupções/contagem apropriada.
-- Servos Pan-Tilt: PWM ou controlador dedicado, conforme corrente e temporização.
-- Comunicação com operador: Wi-Fi ou BLE, a definir conforme alcance e requisitos.
-
-A pinagem e os barramentos não estão fechados. Verificar conflitos de GPIO, endereços, níveis lógicos, memória e capacidade de processamento antes da implementação.
+A interface entre a câmera e o controlador principal será escolhida após seleção dos módulos e testes de transmissão. Não assumir UART nem compartilhar controle de movimento com a câmera.
 
 ## Segurança
 
 - Emergência física independente do software.
-- Sensores anticolisão conectados ao ESP32 principal.
+- Sensores anticolisão ligados ao ESP32 principal.
 - Watchdog e timeout para comandos.
 - Dados inválidos ou antigos não podem autorizar movimento.
 - Falha de GPS, NFC ou câmera não pode impedir a parada segura.
@@ -50,6 +41,6 @@ A pinagem e os barramentos não estão fechados. Verificar conflitos de GPIO, en
 6. Validar ESP32-CAM e vídeo separadamente.
 7. Testar todos os módulos juntos, inclusive falhas de comunicação, ruído, consumo e temperatura.
 
-## Status
+## Estado
 
-Esta pasta descreve o plano de firmware. Não declarar firmware, pinagem, protocolo, vídeo, autonomia ou testes como concluídos sem evidência reproduzível no hardware real. Os itens ainda não ensaiados permanecem **não validados**.
+Esta pasta descreve a organização planejada. Não declarar firmware, pinagem, protocolo, vídeo, autonomia ou testes como concluídos sem evidência reproduzível no hardware real. Itens não ensaiados permanecem **não validados**.
